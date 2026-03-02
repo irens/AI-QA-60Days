@@ -239,11 +239,6 @@ OPENAI_BASE_URL=https://api.openai.com/v1  # 或其他兼容端点
 cd Phase1_LLM_Foundation/Day01
 pytest test_day01.py -v -s
 ```
-
-### 4. 生成质量报告
-
-将测试输出贴回给 AI 助手，自动生成 `report_dayXX.md` 质量分析报告。
-
 ---
 
 ## 📊 项目独家特色：AI 风险分级体系
