@@ -1,4 +1,9 @@
-﻿# 虚拟环境
+﻿# 私有文件
+_meta/global_context.md
+.trae/skills/ai-qa-workflow/SKILL.md
+.traerules
+
+# 虚拟环境
 venv/
 .env/
 .venv/
