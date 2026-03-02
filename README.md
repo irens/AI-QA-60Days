@@ -294,7 +294,7 @@ AI-QA-60Days/
 每个 Day 目录包含：
 - `README.md` - 理论基础与实验目标
 - `test_dayXX.py` - 可运行的测试代码
-- `report_dayXX.md` - 质量分析报告（运行后生成）
+- `report_dayXX.md` - 质量分析报告
 
 ---
 
