@@ -1,183 +1,414 @@
 """
-Day 63: 并发场景资源竞争测试
-目标：最小可用，专注风险验证，杜绝多余业务逻辑
-测试架构师视角：验证系统在异常条件下的行为表现
+Day 63: 连接池管理与资源竞争测试
+目标：验证连接池在高并发场景下的行为，检测资源竞争和连接泄漏
 """
 
-import json
+import threading
 import time
 import random
-from dataclasses import dataclass
-from typing import List, Dict, Tuple, Optional
+import queue
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+from dataclasses import dataclass, field
+from typing import Optional, List, Dict, Set
+from enum import Enum
+import uuid
+
+
+class ConnectionStatus(Enum):
+    IDLE = "idle"
+    ACTIVE = "active"
+    CLOSED = "closed"
 
 
 @dataclass
-class TestCase:
-    """测试用例定义"""
-    name: str
-    category: str
-    input_data: Dict
-    expected_behavior: str
-    risk_level: str  # L1/L2/L3
-
-
-@dataclass
-class TestResult:
-    """测试结果"""
-    name: str
-    passed: bool
-    score: float
-    details: str
-    risk_level: str
-
-
-# ==================== 测试用例库 ====================
-
-TEST_CASES = [
-    TestCase(
-        name="基础功能验证",
-        category="功能测试",
-        input_data={"scenario": "normal"},
-        expected_behavior="正常执行",
-        risk_level="L3"
-    ),
-    TestCase(
-        name="边界条件测试",
-        category="边界测试",
-        input_data={"scenario": "boundary"},
-        expected_behavior="优雅处理",
-        risk_level="L2"
-    ),
-    TestCase(
-        name="异常注入测试",
-        category="故障测试",
-        input_data={"scenario": "failure"},
-        expected_behavior="容错恢复",
-        risk_level="L1"
-    ),
-]
-
-
-# ==================== 模拟系统组件 ====================
-
-class MockSystem:
-    """模拟被测系统"""
+class MockConnection:
+    """模拟数据库连接"""
+    id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
+    status: ConnectionStatus = ConnectionStatus.IDLE
+    created_at: float = field(default_factory=time.time)
+    last_used: float = field(default_factory=time.time)
+    use_count: int = 0
     
-    def __init__(self, failure_rate: float = 0.0):
-        self.failure_rate = failure_rate
-        self.call_count = 0
+    def execute(self, query: str) -> tuple:
+        """模拟执行查询"""
+        if self.status == ConnectionStatus.CLOSED:
+            return False, "连接已关闭"
+        time.sleep(random.uniform(0.01, 0.05))  # 模拟查询耗时
+        self.use_count += 1
+        self.last_used = time.time()
+        return True, f"查询执行成功: {query[:20]}..."
     
-    def process(self, input_data: Dict) -> Tuple[bool, str]:
-        """模拟处理逻辑"""
-        self.call_count += 1
-        
-        # 模拟随机故障
-        if random.random() < self.failure_rate:
-            return False, "模拟故障：系统处理异常"
-        
-        scenario = input_data.get("scenario", "normal")
-        
-        if scenario == "normal":
-            return True, "处理成功"
-        elif scenario == "boundary":
-            return True, "边界处理完成"
-        elif scenario == "failure":
-            # 模拟故障场景
-            return False, "检测到异常输入"
-        
-        return True, "默认处理"
-
-
-# ==================== 测试执行引擎 ====================
-
-def run_test_case(test_case: TestCase, system: MockSystem) -> TestResult:
-    """执行单个测试用例"""
-    success, message = system.process(test_case.input_data)
+    def close(self):
+        """关闭连接"""
+        self.status = ConnectionStatus.CLOSED
     
-    # 根据预期行为判断结果
-    if test_case.expected_behavior in message or success:
-        passed = True
-        score = 1.0
-    else:
-        passed = False
-        score = 0.0
+    def is_valid(self, max_lifetime: float = 300) -> bool:
+        """检查连接是否有效"""
+        if self.status == ConnectionStatus.CLOSED:
+            return False
+        age = time.time() - self.created_at
+        return age < max_lifetime
+
+
+class ConnectionPool:
+    """连接池实现 - 包含故意设计的缺陷用于测试"""
     
-    return TestResult(
-        name=test_case.name,
-        passed=passed,
-        score=score,
-        details=message,
-        risk_level=test_case.risk_level
-    )
+    def __init__(
+        self,
+        max_connections: int = 5,
+        connection_timeout: float = 2.0,
+        leak_simulation: bool = False  # 模拟连接泄漏
+    ):
+        self.max_connections = max_connections
+        self.connection_timeout = connection_timeout
+        self.leak_simulation = leak_simulation
+        
+        self._pool: queue.Queue = queue.Queue()
+        self._active_connections: Dict[str, MockConnection] = {}
+        self._lock = threading.Lock()
+        self._total_created = 0
+        self._leaked_count = 0
+        
+        # 初始化最小连接
+        for _ in range(max(2, max_connections // 2)):
+            conn = MockConnection()
+            self._pool.put(conn)
+            self._total_created += 1
+    
+    def get_connection(self) -> Optional[MockConnection]:
+        """获取连接 - 可能泄漏"""
+        try:
+            conn = self._pool.get(timeout=self.connection_timeout)
+            if not conn.is_valid():
+                conn = MockConnection()
+                self._total_created += 1
+            
+            conn.status = ConnectionStatus.ACTIVE
+            with self._lock:
+                self._active_connections[conn.id] = conn
+            
+            return conn
+        except queue.Empty:
+            return None
+    
+    def release_connection(self, conn: MockConnection) -> bool:
+        """归还连接 - 模拟泄漏"""
+        if conn is None or conn.status == ConnectionStatus.CLOSED:
+            return False
+        
+        # 模拟连接泄漏缺陷
+        if self.leak_simulation and random.random() < 0.3:
+            self._leaked_count += 1
+            return False  # 故意不归还
+        
+        with self._lock:
+            if conn.id in self._active_connections:
+                del self._active_connections[conn.id]
+        
+        conn.status = ConnectionStatus.IDLE
+        self._pool.put(conn)
+        return True
+    
+    def get_stats(self) -> Dict:
+        """获取连接池统计"""
+        with self._lock:
+            return {
+                "total_created": self._total_created,
+                "active": len(self._active_connections),
+                "idle": self._pool.qsize(),
+                "leaked": self._leaked_count,
+                "available": self._pool.qsize() + len(self._active_connections)
+            }
+    
+    def close_all(self):
+        """关闭所有连接"""
+        while not self._pool.empty():
+            try:
+                conn = self._pool.get_nowait()
+                conn.close()
+            except queue.Empty:
+                break
+        with self._lock:
+            for conn in self._active_connections.values():
+                conn.close()
+            self._active_connections.clear()
 
 
-def print_separator(char: str = "-", length: int = 70):
-    """打印分隔线"""
-    print(char * length)
+class ResourceCompetitionTester:
+    """资源竞争测试器"""
+    
+    def __init__(self):
+        self.results: List[Dict] = []
+        self.lock = threading.Lock()
+    
+    def test_basic_pool_functionality(self) -> Dict:
+        """测试连接池基础功能"""
+        print("\n[连接池基础功能] 测试中...")
+        
+        pool = ConnectionPool(max_connections=3, leak_simulation=False)
+        
+        try:
+            # 获取连接
+            conn = pool.get_connection()
+            assert conn is not None, "获取连接失败"
+            
+            # 执行查询
+            success, msg = conn.execute("SELECT * FROM test")
+            assert success, f"查询失败: {msg}"
+            
+            # 归还连接
+            released = pool.release_connection(conn)
+            assert released, "归还连接失败"
+            
+            stats = pool.get_stats()
+            pool.close_all()
+            
+            return {
+                "name": "连接池基础功能",
+                "passed": True,
+                "score": 1.0,
+                "details": f"获取/执行/归还 均正常 | 统计: {stats}",
+                "risk_level": "L3"
+            }
+        except Exception as e:
+            pool.close_all()
+            return {
+                "name": "连接池基础功能",
+                "passed": False,
+                "score": 0.0,
+                "details": f"异常: {str(e)}",
+                "risk_level": "L1"
+            }
+    
+    def test_concurrent_competition(self) -> Dict:
+        """测试并发竞争"""
+        print("\n[并发竞争测试] 测试中...")
+        
+        pool = ConnectionPool(max_connections=5, connection_timeout=1.5, leak_simulation=False)
+        results = {"success": 0, "timeout": 0, "error": 0}
+        
+        def worker(worker_id: int):
+            try:
+                conn = pool.get_connection()
+                if conn is None:
+                    with self.lock:
+                        results["timeout"] += 1
+                    return
+                
+                # 模拟工作
+                time.sleep(random.uniform(0.1, 0.3))
+                conn.execute(f"Query from worker {worker_id}")
+                pool.release_connection(conn)
+                
+                with self.lock:
+                    results["success"] += 1
+            except Exception as e:
+                with self.lock:
+                    results["error"] += 1
+        
+        # 启动20个并发线程
+        threads = []
+        for i in range(20):
+            t = threading.Thread(target=worker, args=(i,))
+            threads.append(t)
+            t.start()
+        
+        for t in threads:
+            t.join(timeout=5)
+        
+        pool.close_all()
+        
+        # 评估结果
+        passed = results["error"] == 0 and results["timeout"] > 0  # 应该有超时但无错误
+        risk_level = "L2" if results["error"] > 0 else "L3"
+        
+        return {
+            "name": "并发竞争测试",
+            "passed": passed,
+            "score": results["success"] / 20,
+            "details": f"成功: {results['success']}/20, 超时: {results['timeout']}, 错误: {results['error']}",
+            "risk_level": risk_level
+        }
+    
+    def test_connection_leak(self) -> Dict:
+        """测试连接泄漏检测"""
+        print("\n[连接泄漏检测] 测试中...")
+        
+        pool = ConnectionPool(max_connections=5, leak_simulation=True)  # 启用泄漏模拟
+        
+        # 模拟多次获取不归还
+        for _ in range(10):
+            conn = pool.get_connection()
+            if conn:
+                # 30%概率泄漏
+                pool.release_connection(conn)
+            time.sleep(0.01)
+        
+        stats = pool.get_stats()
+        pool.close_all()
+        
+        leak_rate = stats["leaked"] / stats["total_created"] if stats["total_created"] > 0 else 0
+        
+        # 泄漏率超过20%视为严重问题
+        passed = leak_rate < 0.2
+        risk_level = "L1" if leak_rate > 0.3 else "L2" if leak_rate > 0.1 else "L3"
+        
+        return {
+            "name": "连接泄漏检测",
+            "passed": passed,
+            "score": 1.0 - leak_rate,
+            "details": f"总创建: {stats['total_created']}, 泄漏: {stats['leaked']}, 泄漏率: {leak_rate:.1%}",
+            "risk_level": risk_level
+        }
+    
+    def test_deadlock_detection(self) -> Dict:
+        """测试死锁检测"""
+        print("\n[死锁检测] 测试中...")
+        
+        resource_a = threading.Lock()
+        resource_b = threading.Lock()
+        results = {"deadlock_detected": False, "completed": 0}
+        
+        def thread1():
+            try:
+                with resource_a:
+                    time.sleep(0.01)
+                    # 设置超时避免真正死锁
+                    acquired = resource_b.acquire(timeout=1.0)
+                    if acquired:
+                        resource_b.release()
+                results["completed"] += 1
+            except:
+                results["deadlock_detected"] = True
+        
+        def thread2():
+            try:
+                with resource_b:
+                    time.sleep(0.01)
+                    acquired = resource_a.acquire(timeout=1.0)
+                    if acquired:
+                        resource_a.release()
+                results["completed"] += 1
+            except:
+                results["deadlock_detected"] = True
+        
+        t1 = threading.Thread(target=thread1)
+        t2 = threading.Thread(target=thread2)
+        
+        t1.start()
+        t2.start()
+        
+        t1.join(timeout=3)
+        t2.join(timeout=3)
+        
+        # 如果都完成了，说明没有死锁（超时机制生效）
+        passed = results["completed"] == 2
+        
+        return {
+            "name": "死锁检测",
+            "passed": passed,
+            "score": 1.0 if passed else 0.0,
+            "details": f"完成线程: {results['completed']}/2, 死锁检测: {'通过' if passed else '失败'}",
+            "risk_level": "L1" if not passed else "L3"
+        }
+    
+    def test_resource_limits(self) -> Dict:
+        """测试资源上限"""
+        print("\n[资源上限测试] 测试中...")
+        
+        pool = ConnectionPool(max_connections=10, leak_simulation=False)
+        connections = []
+        
+        try:
+            # 尝试获取超过最大连接数的连接
+            for i in range(15):
+                conn = pool.get_connection()
+                if conn:
+                    connections.append(conn)
+            
+            stats = pool.get_stats()
+            
+            # 验证连接数不超过上限
+            within_limit = stats["active"] <= 10
+            
+            # 归还所有连接
+            for conn in connections:
+                pool.release_connection(conn)
+            
+            pool.close_all()
+            
+            return {
+                "name": "资源上限测试",
+                "passed": within_limit,
+                "score": 1.0 if within_limit else 0.5,
+                "details": f"最大活跃: {stats['active']}/10, 连接数限制: {'生效' if within_limit else '失效'}",
+                "risk_level": "L2" if not within_limit else "L3"
+            }
+        except Exception as e:
+            pool.close_all()
+            return {
+                "name": "资源上限测试",
+                "passed": False,
+                "score": 0.0,
+                "details": f"异常: {str(e)}",
+                "risk_level": "L1"
+            }
+    
+    def run_all_tests(self) -> List[Dict]:
+        """运行所有测试"""
+        print("=" * 60)
+        print("=== Day 63: 连接池管理与资源竞争测试 ===")
+        print("=" * 60)
+        
+        print("\n🔧 测试环境")
+        print("- 连接池大小: 5")
+        print("- 并发线程数: 20")
+        print("- 连接超时: 1.5s")
+        
+        print("\n📊 测试执行")
+        
+        tests = [
+            self.test_basic_pool_functionality,
+            self.test_concurrent_competition,
+            self.test_connection_leak,
+            self.test_deadlock_detection,
+            self.test_resource_limits,
+        ]
+        
+        results = []
+        for test in tests:
+            result = test()
+            results.append(result)
+            status = "✅ 通过" if result["passed"] else "❌ 失败"
+            print(f"\n[{result['name']}] {status}")
+            print(f"  └─ {result['details']}")
+        
+        # 汇总
+        print("\n" + "=" * 60)
+        print("📈 风险汇总")
+        
+        l1_count = sum(1 for r in results if r["risk_level"] == "L1" and not r["passed"])
+        l2_count = sum(1 for r in results if r["risk_level"] == "L2" and not r["passed"])
+        l3_count = sum(1 for r in results if r["risk_level"] == "L3" and not r["passed"])
+        
+        print(f"- L1风险: {l1_count}个")
+        print(f"- L2风险: {l2_count}个")
+        print(f"- L3风险: {l3_count}个")
+        
+        if l1_count > 0:
+            print(f"\n⚠️  发现 {l1_count} 个L1级别风险，需立即修复！")
+        
+        return results
 
 
 def main():
-    """主测试流程"""
-    print("=" * 70)
-    print(f"Day 63: 并发场景资源竞争测试")
-    print("测试架构师视角：验证系统在异常条件下的行为表现")
-    print("=" * 70)
-    print()
+    tester = ResourceCompetitionTester()
+    results = tester.run_all_tests()
     
-    # 初始化模拟系统（设置故障率）
-    system = MockSystem(failure_rate=0.1)
-    results: List[TestResult] = []
-    
-    # 执行测试
-    print_separator("=")
-    print("【测试执行】")
-    print_separator("=")
-    
-    for test_case in TEST_CASES:
-        result = run_test_case(test_case, system)
-        results.append(result)
-        
-        status = "✅ 通过" if result.passed else "❌ 失败"
-        print(f"  {status} | {result.name}")
-        print(f"       得分: {result.score} | 风险: {result.risk_level}")
-        print(f"       详情: {result.details}")
-        print()
-    
-    # 汇总报告
-    print_separator("=")
-    print("【测试汇总报告】")
-    print_separator("=")
-    
-    total = len(results)
-    passed = sum(1 for r in results if r.passed)
-    failed = total - passed
-    
-    l1_issues = [r for r in results if r.risk_level == "L1" and not r.passed]
-    l2_issues = [r for r in results if r.risk_level == "L2" and not r.passed]
-    l3_issues = [r for r in results if r.risk_level == "L3" and not r.passed]
-    
-    print(f"总测试数: {total}")
-    print(f"通过: {passed} | 失败: {failed} | 通过率: {passed/total*100:.1f}%")
-    print()
-    
-    print("风险分布:")
-    print(f"  🔴 L1阻断性风险: {len(l1_issues)}个")
-    for issue in l1_issues:
-        print(f"     - {issue.name}")
-    
-    print(f"  🟡 L2高优先级风险: {len(l2_issues)}个")
-    for issue in l2_issues:
-        print(f"     - {issue.name}")
-    
-    print(f"  🟢 L3一般风险: {len(l3_issues)}个")
-    for issue in l3_issues:
-        print(f"     - {issue.name}")
-    
-    print()
-    print_separator("=")
-    print("测试完成")
-    print_separator("=")
+    # 返回整体通过状态
+    all_passed = all(r["passed"] for r in results)
+    return 0 if all_passed else 1
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
