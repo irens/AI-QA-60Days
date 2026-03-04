@@ -1,7 +1,23 @@
 ﻿# 私有文件
 _meta/global_context.md
-.trae/skills/ai-qa-workflow/SKILL.md
+.trae/skills/
 .traerules
+
+# Phase 1
+Phase1_LLM_Foundation/简单LLM应用基础质量评估方案.md
+Phase1_LLM_Foundation/phase1_evaluation_report.md
+
+# Phase 2
+Phase2_Prompt_Testing/phase2_evaluation_report.md
+
+# Phase 3
+Phase3_RAG_Reliability/phase3_evaluation_report.md
+
+# Phase 4
+Phase4_Agent_Risk/phase4_evaluation_report.md
+
+# Phase 5
+Phase5_Final_Sandbox/phase5_evaluation_report.md
 
 # 虚拟环境
 venv/

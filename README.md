@@ -51,14 +51,14 @@
 | ✅ | **Day 02** | **[Tokenizer 与上下文边界](./Phase1_LLM_Foundation/Day02)** | 💡 **QA洞察**：不同Tokenizer的编码差异直接影响成本估算和上下文规划。BPE与SentencePiece对中文处理的压缩效率差异可达30-50%。 |
 | ✅ | **Day 03** | **[Top-p 采样与输出多样性](./Phase1_LLM_Foundation/Day03)** | 💡 **QA洞察**：创意任务与事实查询任务的最优温度参数显著不同，必须分类测试。 |
 | ✅ | **Day 04** | **[模型版本回归测试](./Phase1_LLM_Foundation/Day04)** | 💡 **QA洞察**：模型版本管理需追踪API版本、模型快照、训练数据截止时间等多个维度。 |
-| ✅ | **Day 05** | **[幻觉检测入门](./Phase1_LLM_Foundation/Day05)** | 💡 **QA洞察**：幻觉分为事实性、忠实性、内在三类，需采用不同的检测策略。 |
-| ✅ | **Day 06** | **[输出稳定性基线](./Phase1_LLM_Foundation/Day06)** | 💡 **QA洞察**：同一参数配置在不同时间点的输出一致性，可检测模型版本更新或基础设施变化的影响。 |
-| ✅ | **Day 07** | **[事实一致性评估](./Phase1_LLM_Foundation/Day07)** | 💡 **QA洞察**：基于NLI的entailment检测是验证忠实性的有效手段，但对隐含推理检测不足。 |
-| ✅ | **Day 08** | **[同义改写鲁棒性测试](./Phase1_LLM_Foundation/Day08)** | 💡 **QA洞察**：词汇/句法/语篇层面的变换测试，可发现模型对表述方式的过度敏感。 |
-| ✅ | **Day 09** | **[噪声注入压力测试](./Phase1_LLM_Foundation/Day09)** | 💡 **QA洞察**：从轻微噪声到极端破坏的梯度测试，可识别模型失效的临界点。 |
-| ✅ | **Day 10** | **[基础对抗 Prompt 识别](./Phase1_LLM_Foundation/Day10)** | 💡 **QA洞察**：直接/间接/多轮注入攻击需采用纵深防御策略，单一防线易被绕过。 |
-| ✅ | **Day 11** | **[多轮诱导与角色扮演](./Phase1_LLM_Foundation/Day11)** | 💡 **QA洞察**：对话历史污染是高级攻击手段，需监控会话状态的异常变化。 |
-| ✅ | **Day 12** | **[红队测试实战](./Phase1_LLM_Foundation/Day12)** | 💡 **QA洞察**：系统化安全评估需覆盖攻击面分析、漏洞利用、修复验证完整闭环。 |
+| ✅ | **Day 05** | **[温度×Top-p 参数网格扫描](./Phase1_LLM_Foundation/Day05)** | 💡 **QA洞察**：参数组合效应是输出稳定性的隐形杀手，单一参数测试无法发现组合风险。 |
+| ✅ | **Day 06** | **[输出稳定性时间维度验证](./Phase1_LLM_Foundation/Day06)** | 💡 **QA洞察**：同一参数配置在不同时间点的输出一致性，可检测模型版本更新或基础设施变化的影响。 |
+| ✅ | **Day 07** | **[模型版本迭代与回归测试](./Phase1_LLM_Foundation/Day07)** | 💡 **QA洞察**：模型版本管理需追踪API版本、模型快照、训练数据截止时间等多个维度。 |
+| ✅ | **Day 08** | **[A/B 测试实验设计](./Phase1_LLM_Foundation/Day08)** | 💡 **QA洞察**：样本量计算、显著性水平选择、功效分析是A/B测试的统计基础。 |
+| ✅ | **Day 09** | **[幻觉检测与事实一致性](./Phase1_LLM_Foundation/Day09)** | 💡 **QA洞察**：幻觉分为事实性、忠实性、内在三类，需采用不同的检测策略。 |
+| ✅ | **Day 10** | **[NLI-based 忠实度评分](./Phase1_LLM_Foundation/Day10)** | 💡 **QA洞察**：基于NLI的entailment检测是验证忠实性的有效手段，但对隐含推理检测不足。 |
+| ✅ | **Day 11** | **[输出鲁棒性测试——同义改写](./Phase1_LLM_Foundation/Day11)** | 💡 **QA洞察**：词汇/句法/语篇层面的变换测试，可发现模型对表述方式的过度敏感。 |
+| ✅ | **Day 12** | **[输出鲁棒性测试——跨语言与语篇级改写](./Phase1_LLM_Foundation/Day12)** | 💡 **QA洞察**：跨语言场景下翻译往返可能丢失关键信息，语篇级改写可能破坏长距离依赖。 |
 
 ---
 
@@ -72,12 +72,12 @@
 |:---:|:---:|:---|:---|
 | ✅ | **Day 13** | **[直接注入攻击测试](./Phase2_Prompt_Testing/Day13)** | 💡 **QA洞察**：分隔符逃逸、角色覆盖、指令重定向是最常见的三种直接注入模式。 |
 | ✅ | **Day 14** | **[间接注入攻击测试](./Phase2_Prompt_Testing/Day14)** | 💡 **QA洞察**：外部数据源（网页、文档）是间接注入的主要载体，需建立内容净化机制。 |
-| ✅ | **Day 15** | **[多轮诱导与越狱](./Phase2_Prompt_Testing/Day15)** | 💡 **QA洞察**：DAN模式等越狱技术利用模型的角色扮演能力，需强化系统Prompt的边界声明。 |
+| ✅ | **Day 15** | **[Prompt 结构设计与可测试性原则](./Phase2_Prompt_Testing/Day15)** | 💡 **QA洞察**：将Prompt视为"软代码"，应用软件工程的可测试性原则确保输出稳定性。 |
 | ✅ | **Day 16** | **[Prompt 结构可测试性设计](./Phase2_Prompt_Testing/Day16)** | 💡 **QA洞察**：CO-STAR框架（Context-Objective-Style-Tone-Audience-Response）是设计可测试Prompt的有效工具。 |
 | ✅ | **Day 17** | **[Few-shot 示例稳定性](./Phase2_Prompt_Testing/Day17)** | 💡 **QA洞察**：示例扰动测试（替换、删除、重排）可验证Prompt对示例选择的敏感度。 |
-| ✅ | **Day 18** | **[系统 Prompt 安全边界](./Phase2_Prompt_Testing/Day18)** | 💡 **QA洞察**：纵深防御需在输入层、模型层、输出层、架构层建立多重防护。 |
-| ✅ | **Day 19** | **[Prompt 版本管理](./Phase2_Prompt_Testing/Day19)** | 💡 **QA洞察**：Prompt即代码，需采用Git版本控制、变更影响分析、自动化回归测试。 |
-| ✅ | **Day 20** | **[Prompt A/B 测试框架](./Phase2_Prompt_Testing/Day20)** | 💡 **QA洞察**：样本量计算、显著性水平选择、功效分析是A/B测试的统计基础。 |
+| ✅ | **Day 18** | **[跨模型 Few-shot 迁移测试](./Phase2_Prompt_Testing/Day18)** | 💡 **QA洞察**：同一套Few-shot示例在不同模型上表现可能差异巨大，多模型部署需验证示例兼容性。 |
+| ✅ | **Day 19** | **[系统 Prompt 安全边界测试](./Phase2_Prompt_Testing/Day19)** | 💡 **QA洞察**：系统Prompt是AI应用的"宪法"，一旦被突破，所有安全策略都将失效。 |
+| ✅ | **Day 20** | **[注入风险扫描](./Phase2_Prompt_Testing/Day20)** | 💡 **QA洞察**：Prompt注入是AI应用的"SQL注入"，需建立输入过滤、意图分类、输出监控多层防护。 |
 | ✅ | **Day 21** | **[Prompt 质量门禁集成](./Phase2_Prompt_Testing/Day21)** | 💡 **QA洞察**：CI/CD流水线中的Prompt质量门禁需覆盖功能、安全、性能三个维度。 |
 
 ---
