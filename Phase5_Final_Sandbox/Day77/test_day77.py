@@ -1,182 +1,292 @@
 """
-Day 77: 质量报告撰写(管理层)
-目标：最小可用，专注风险验证，杜绝多余业务逻辑
-测试架构师视角：验证系统在异常条件下的行为表现
+Day 77: 性能压测深度实践(2) - 资源监控与瓶颈定位
+目标：从指标异常到根因定位的系统化方法
+测试架构师视角：资源监控、瓶颈识别、根因分析
 """
 
-import json
-import time
-import random
 from dataclasses import dataclass
-from typing import List, Dict, Tuple, Optional
+from typing import Dict, List, Tuple
+from enum import Enum
+import random
+
+
+class MetricStatus(Enum):
+    """指标状态"""
+    NORMAL = "正常"
+    WARNING = "警告"
+    CRITICAL = "严重"
 
 
 @dataclass
-class TestCase:
-    """测试用例定义"""
+class Metric:
+    """监控指标"""
     name: str
-    category: str
-    input_data: Dict
-    expected_behavior: str
-    risk_level: str  # L1/L2/L3
+    value: float
+    unit: str
+    threshold_warning: float
+    threshold_critical: float
+    status: MetricStatus = MetricStatus.NORMAL
 
 
 @dataclass
-class TestResult:
-    """测试结果"""
-    name: str
-    passed: bool
-    score: float
-    details: str
-    risk_level: str
+class Bottleneck:
+    """性能瓶颈"""
+    resource: str
+    confidence: int  # 置信度 0-100
+    root_causes: List[str]
+    recommendations: List[str]
 
 
-# ==================== 测试用例库 ====================
+class ResourceMonitor:
+    """资源监控器"""
 
-TEST_CASES = [
-    TestCase(
-        name="基础功能验证",
-        category="功能测试",
-        input_data={"scenario": "normal"},
-        expected_behavior="正常执行",
-        risk_level="L3"
-    ),
-    TestCase(
-        name="边界条件测试",
-        category="边界测试",
-        input_data={"scenario": "boundary"},
-        expected_behavior="优雅处理",
-        risk_level="L2"
-    ),
-    TestCase(
-        name="异常注入测试",
-        category="故障测试",
-        input_data={"scenario": "failure"},
-        expected_behavior="容错恢复",
-        risk_level="L1"
-    ),
-]
+    def __init__(self):
+        self.app_metrics: List[Metric] = []
+        self.system_metrics: List[Metric] = []
+        self.middleware_metrics: List[Metric] = []
+
+    def collect_app_metrics(self) -> List[Metric]:
+        """采集应用层指标"""
+        metrics = [
+            Metric("平均响应时间", 245, "ms", 200, 500),
+            Metric("P95响应时间", 580, "ms", 500, 1000),
+            Metric("QPS", 850, "req/s", 1000, 500),
+            Metric("错误率", 0.3, "%", 0.5, 1.0)
+        ]
+
+        for m in metrics:
+            if m.value >= m.threshold_critical:
+                m.status = MetricStatus.CRITICAL
+            elif m.value >= m.threshold_warning:
+                m.status = MetricStatus.WARNING
+
+        self.app_metrics = metrics
+        return metrics
+
+    def collect_system_metrics(self) -> List[Metric]:
+        """采集系统层指标"""
+        metrics = [
+            Metric("CPU使用率", 78, "%", 70, 85),
+            Metric("内存使用率", 65, "%", 80, 90),
+            Metric("磁盘I/O", 45, "%", 70, 85),
+            Metric("网络带宽", 55, "%", 70, 85)
+        ]
+
+        for m in metrics:
+            if m.value >= m.threshold_critical:
+                m.status = MetricStatus.CRITICAL
+            elif m.value >= m.threshold_warning:
+                m.status = MetricStatus.WARNING
+
+        self.system_metrics = metrics
+        return metrics
+
+    def collect_middleware_metrics(self) -> List[Metric]:
+        """采集中间件指标"""
+        metrics = [
+            Metric("数据库连接池", 85, "%", 80, 95),
+            Metric("Redis命中率", 72, "%", 70, 50),
+            Metric("MQ堆积", 1200, "条", 5000, 10000)
+        ]
+
+        for m in metrics:
+            if m.name == "Redis命中率":
+                # 命中率是越高越好，反向判断
+                if m.value <= 50:
+                    m.status = MetricStatus.CRITICAL
+                elif m.value <= 70:
+                    m.status = MetricStatus.WARNING
+            else:
+                if m.value >= m.threshold_critical:
+                    m.status = MetricStatus.CRITICAL
+                elif m.value >= m.threshold_warning:
+                    m.status = MetricStatus.WARNING
+
+        self.middleware_metrics = metrics
+        return metrics
+
+    def get_all_metrics(self) -> Dict[str, List[Metric]]:
+        """获取所有指标"""
+        return {
+            "app": self.app_metrics,
+            "system": self.system_metrics,
+            "middleware": self.middleware_metrics
+        }
 
 
-# ==================== 模拟系统组件 ====================
+class BottleneckAnalyzer:
+    """瓶颈分析器"""
 
-class MockSystem:
-    """模拟被测系统"""
-    
-    def __init__(self, failure_rate: float = 0.0):
-        self.failure_rate = failure_rate
-        self.call_count = 0
-    
-    def process(self, input_data: Dict) -> Tuple[bool, str]:
-        """模拟处理逻辑"""
-        self.call_count += 1
-        
-        # 模拟随机故障
-        if random.random() < self.failure_rate:
-            return False, "模拟故障：系统处理异常"
-        
-        scenario = input_data.get("scenario", "normal")
-        
-        if scenario == "normal":
-            return True, "处理成功"
-        elif scenario == "boundary":
-            return True, "边界处理完成"
-        elif scenario == "failure":
-            # 模拟故障场景
-            return False, "检测到异常输入"
-        
-        return True, "默认处理"
+    def __init__(self, monitor: ResourceMonitor):
+        self.monitor = monitor
+        self.bottlenecks: List[Bottleneck] = []
+
+    def use_analysis(self) -> Dict[str, Dict]:
+        """USE方法分析"""
+        results = {}
+
+        # 分析CPU
+        cpu_metric = next((m for m in self.monitor.system_metrics if m.name == "CPU使用率"), None)
+        if cpu_metric:
+            results["CPU"] = {
+                "utilization": cpu_metric.value,
+                "saturation": "中等" if cpu_metric.value < 80 else "高",
+                "errors": "无",
+                "status": cpu_metric.status.value
+            }
+
+        # 分析数据库连接池
+        db_metric = next((m for m in self.monitor.middleware_metrics if m.name == "数据库连接池"), None)
+        if db_metric:
+            results["数据库连接"] = {
+                "utilization": db_metric.value,
+                "saturation": "高" if db_metric.value > 80 else "低",
+                "errors": "无",
+                "status": db_metric.status.value
+            }
+
+        return results
+
+    def identify_bottlenecks(self) -> List[Bottleneck]:
+        """识别性能瓶颈"""
+        bottlenecks = []
+
+        # 检查数据库连接池
+        db_metric = next((m for m in self.monitor.middleware_metrics if m.name == "数据库连接池"), None)
+        if db_metric and db_metric.status != MetricStatus.NORMAL:
+            bottlenecks.append(Bottleneck(
+                resource="数据库连接池饱和",
+                confidence=85,
+                root_causes=[
+                    "1. 慢查询导致连接长时间占用",
+                    "2. 连接池配置偏小(100)",
+                    "3. 缺少连接超时配置"
+                ],
+                recommendations=[
+                    "高优先级: 优化慢查询SQL，添加索引",
+                    "高优先级: 增加连接池大小到200",
+                    "中优先级: 配置连接超时和重试机制"
+                ]
+            ))
+
+        # 检查响应时间
+        latency_metric = next((m for m in self.monitor.app_metrics if m.name == "平均响应时间"), None)
+        if latency_metric and latency_metric.status != MetricStatus.NORMAL:
+            bottlenecks.append(Bottleneck(
+                resource="响应时间超标",
+                confidence=75,
+                root_causes=[
+                    "1. 数据库查询慢",
+                    "2. 缺少缓存层",
+                    "3. 同步处理阻塞"
+                ],
+                recommendations=[
+                    "高优先级: 引入Redis缓存热点数据",
+                    "中优先级: 订单处理异步化",
+                    "低优先级: 数据库读写分离"
+                ]
+            ))
+
+        self.bottlenecks = bottlenecks
+        return bottlenecks
 
 
-# ==================== 测试执行引擎 ====================
+def generate_monitoring_report() -> str:
+    """生成监控报告"""
+    lines = []
+    lines.append("=" * 70)
+    lines.append("Day 77: 性能压测深度实践(2) - 资源监控与瓶颈定位")
+    lines.append("测试架构师视角：从指标异常到根因定位的系统化方法")
+    lines.append("=" * 70)
+    lines.append("")
 
-def run_test_case(test_case: TestCase, system: MockSystem) -> TestResult:
-    """执行单个测试用例"""
-    success, message = system.process(test_case.input_data)
-    
-    # 根据预期行为判断结果
-    if test_case.expected_behavior in message or success:
-        passed = True
-        score = 1.0
+    # 初始化监控器
+    monitor = ResourceMonitor()
+
+    # 步骤1: 资源监控数据采集
+    lines.append("【步骤1】资源监控数据采集")
+    lines.append("")
+
+    app_metrics = monitor.collect_app_metrics()
+    lines.append("  应用层指标:")
+    for m in app_metrics:
+        status_icon = "⚠️" if m.status == MetricStatus.WARNING else "❌" if m.status == MetricStatus.CRITICAL else "✓"
+        if m.status != MetricStatus.NORMAL:
+            lines.append(f"    {m.name}: {m.value}{m.unit} ({status_icon} 超过{m.threshold_warning}{m.unit}阈值)")
+        else:
+            lines.append(f"    {m.name}: {m.value}{m.unit}")
+    lines.append("")
+
+    system_metrics = monitor.collect_system_metrics()
+    lines.append("  系统层指标:")
+    for m in system_metrics:
+        status_icon = "⚠️" if m.status == MetricStatus.WARNING else "❌" if m.status == MetricStatus.CRITICAL else "✓"
+        if m.status != MetricStatus.NORMAL:
+            lines.append(f"    {m.name}: {m.value}{m.unit} ({status_icon} 接近阈值)")
+        else:
+            lines.append(f"    {m.name}: {m.value}{m.unit}")
+    lines.append("")
+
+    middleware_metrics = monitor.collect_middleware_metrics()
+    lines.append("  中间件指标:")
+    for m in middleware_metrics:
+        status_icon = "⚠️" if m.status == MetricStatus.WARNING else "❌" if m.status == MetricStatus.CRITICAL else "✓"
+        if m.name == "数据库连接池":
+            lines.append(f"    {m.name}: {m.value}/100 ({status_icon} 接近上限)")
+        elif m.name == "Redis命中率":
+            lines.append(f"    {m.name}: {m.value}%")
+        else:
+            lines.append(f"    {m.name}: {m.value}{m.unit}")
+    lines.append("")
+
+    # 步骤2: 瓶颈识别分析
+    lines.append("【步骤2】瓶颈识别分析")
+    lines.append("  使用USE方法分析:")
+
+    analyzer = BottleneckAnalyzer(monitor)
+    use_results = analyzer.use_analysis()
+
+    for resource, result in use_results.items():
+        lines.append(f"    {resource}: 利用率{result['utilization']}%({result['status']}), 饱和度{result['saturation']}, 错误{result['errors']}")
+
+    bottlenecks = analyzer.identify_bottlenecks()
+    if bottlenecks:
+        lines.append("")
+        lines.append(f"  主要瓶颈: {bottlenecks[0].resource}")
+        lines.append(f"  置信度: {bottlenecks[0].confidence}%")
+    lines.append("")
+
+    # 步骤3: 根因定位
+    lines.append("【步骤3】根因定位")
+    if bottlenecks:
+        bottleneck = bottlenecks[0]
+        lines.append("  根因分析:")
+        for cause in bottleneck.root_causes:
+            lines.append(f"    {cause}")
+        lines.append("")
+
+        lines.append("  优化建议:")
+        for rec in bottleneck.recommendations:
+            lines.append(f"    {rec}")
+    lines.append("")
+
+    # 结论
+    lines.append("【结论】瓶颈定位完成")
+    if bottlenecks:
+        lines.append(f"  主要瓶颈: {bottlenecks[0].resource}")
+        lines.append(f"  根因: 慢查询 + 连接池配置不足")
+        lines.append(f"  预计优化效果: 响应时间降低40-50%")
     else:
-        passed = False
-        score = 0.0
-    
-    return TestResult(
-        name=test_case.name,
-        passed=passed,
-        score=score,
-        details=message,
-        risk_level=test_case.risk_level
-    )
+        lines.append("  未发现明显性能瓶颈")
+    lines.append("")
 
-
-def print_separator(char: str = "-", length: int = 70):
-    """打印分隔线"""
-    print(char * length)
+    return "\n".join(lines)
 
 
 def main():
-    """主测试流程"""
-    print("=" * 70)
-    print(f"Day 77: 质量报告撰写(管理层)")
-    print("测试架构师视角：验证系统在异常条件下的行为表现")
-    print("=" * 70)
-    print()
-    
-    # 初始化模拟系统（设置故障率）
-    system = MockSystem(failure_rate=0.1)
-    results: List[TestResult] = []
-    
-    # 执行测试
-    print_separator("=")
-    print("【测试执行】")
-    print_separator("=")
-    
-    for test_case in TEST_CASES:
-        result = run_test_case(test_case, system)
-        results.append(result)
-        
-        status = "✅ 通过" if result.passed else "❌ 失败"
-        print(f"  {status} | {result.name}")
-        print(f"       得分: {result.score} | 风险: {result.risk_level}")
-        print(f"       详情: {result.details}")
-        print()
-    
-    # 汇总报告
-    print_separator("=")
-    print("【测试汇总报告】")
-    print_separator("=")
-    
-    total = len(results)
-    passed = sum(1 for r in results if r.passed)
-    failed = total - passed
-    
-    l1_issues = [r for r in results if r.risk_level == "L1" and not r.passed]
-    l2_issues = [r for r in results if r.risk_level == "L2" and not r.passed]
-    l3_issues = [r for r in results if r.risk_level == "L3" and not r.passed]
-    
-    print(f"总测试数: {total}")
-    print(f"通过: {passed} | 失败: {failed} | 通过率: {passed/total*100:.1f}%")
-    print()
-    
-    print("风险分布:")
-    print(f"  🔴 L1阻断性风险: {len(l1_issues)}个")
-    for issue in l1_issues:
-        print(f"     - {issue.name}")
-    
-    print(f"  🟡 L2高优先级风险: {len(l2_issues)}个")
-    for issue in l2_issues:
-        print(f"     - {issue.name}")
-    
-    print(f"  🟢 L3一般风险: {len(l3_issues)}个")
-    for issue in l3_issues:
-        print(f"     - {issue.name}")
-    
-    print()
-    print_separator("=")
-    print("测试完成")
-    print_separator("=")
+    """主函数"""
+    report = generate_monitoring_report()
+    print(report)
 
 
 if __name__ == "__main__":

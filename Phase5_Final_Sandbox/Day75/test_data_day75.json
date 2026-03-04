@@ -1,0 +1,150 @@
+{
+  "collected_at": "2026-03-04T11:13:25.475678",
+  "performance": {
+    "baseline_metrics": [
+      {
+        "name": "平均响应时间",
+        "threshold": "<200ms",
+        "actual": 156,
+        "unit": "ms",
+        "status": "✅ 通过"
+      },
+      {
+        "name": "P95响应时间",
+        "threshold": "<500ms",
+        "actual": 380,
+        "unit": "ms",
+        "status": "✅ 通过"
+      },
+      {
+        "name": "P99响应时间",
+        "threshold": "<1000ms",
+        "actual": 720,
+        "unit": "ms",
+        "status": "✅ 通过"
+      },
+      {
+        "name": "QPS",
+        "threshold": ">1000",
+        "actual": 1250,
+        "unit": "req/s",
+        "status": "✅ 通过"
+      },
+      {
+        "name": "错误率",
+        "threshold": "<0.1%",
+        "actual": 0.05,
+        "unit": "%",
+        "status": "✅ 通过"
+      },
+      {
+        "name": "CPU使用率",
+        "threshold": "<70%",
+        "actual": 65,
+        "unit": "%",
+        "status": "✅ 通过"
+      },
+      {
+        "name": "内存使用率",
+        "threshold": "<80%",
+        "actual": 72,
+        "unit": "%",
+        "status": "✅ 通过"
+      }
+    ],
+    "load_test_results": [
+      {
+        "concurrent_users": 100,
+        "avg_response_time": 133.2,
+        "error_rate": 0.02,
+        "throughput": 140.0,
+        "cpu_usage": 38.0,
+        "memory_usage": 42.8
+      },
+      {
+        "concurrent_users": 500,
+        "avg_response_time": 194.4,
+        "error_rate": 0.01,
+        "throughput": 709.0,
+        "cpu_usage": 50.2,
+        "memory_usage": 56.4
+      },
+      {
+        "concurrent_users": 1000,
+        "avg_response_time": 318.7,
+        "error_rate": 0.13,
+        "throughput": 1488.0,
+        "cpu_usage": 73.5,
+        "memory_usage": 67.3
+      },
+      {
+        "concurrent_users": 2000,
+        "avg_response_time": 498.7,
+        "error_rate": 0.25,
+        "throughput": 1538.0,
+        "cpu_usage": 91.1,
+        "memory_usage": 88.6
+      }
+    ],
+    "capacity_analysis": {
+      "max_capacity": 2000,
+      "inflection_point": 1600,
+      "recommended_capacity": 1280
+    }
+  },
+  "security": {
+    "findings": [
+      {
+        "check_item": "Prompt注入防护",
+        "level": "高",
+        "result": "✅ 通过",
+        "description": "输入过滤机制有效，恶意Prompt被正确拦截",
+        "recommendation": "保持现有防护措施"
+      },
+      {
+        "check_item": "SQL注入防护",
+        "level": "高",
+        "result": "✅ 通过",
+        "description": "使用参数化查询，无SQL注入风险",
+        "recommendation": "保持现有防护措施"
+      },
+      {
+        "check_item": "XSS防护",
+        "level": "高",
+        "result": "✅ 通过",
+        "description": "输出内容正确编码，无XSS漏洞",
+        "recommendation": "保持现有防护措施"
+      },
+      {
+        "check_item": "敏感信息泄露",
+        "level": "高",
+        "result": "⚠️ 警告",
+        "description": "应用日志中包含用户手机号明文",
+        "recommendation": "对日志中的敏感信息进行脱敏处理"
+      },
+      {
+        "check_item": "越权访问",
+        "level": "中",
+        "result": "✅ 通过",
+        "description": "权限校验完整，无法越权访问",
+        "recommendation": "保持现有防护措施"
+      },
+      {
+        "check_item": "依赖漏洞",
+        "level": "中",
+        "result": "⚠️ 警告",
+        "description": "发现3个低危CVE：CVE-2024-XXX1, CVE-2024-XXX2, CVE-2024-XXX3",
+        "recommendation": "更新依赖版本到最新稳定版"
+      }
+    ],
+    "summary": {
+      "total": 6,
+      "high_risk": 4,
+      "medium_risk": 2,
+      "low_risk": 0,
+      "passed": 4,
+      "warnings": 2,
+      "failed": 0
+    }
+  }
+}

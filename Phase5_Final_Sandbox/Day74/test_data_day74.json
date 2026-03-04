@@ -1,0 +1,384 @@
+{
+  "project": "电商平台功能测试",
+  "execution_time": "2026-03-04T11:13:16.402597",
+  "summary": {
+    "total": 50,
+    "passed": 46,
+    "failed": 4,
+    "skipped": 0
+  },
+  "defects": [
+    {
+      "id": "DEF-001",
+      "title": "优惠券计算精度错误",
+      "severity": "P1-严重"
+    },
+    {
+      "id": "DEF-002",
+      "title": "搜索结果显示延迟",
+      "severity": "P2-一般"
+    },
+    {
+      "id": "DEF-003",
+      "title": "搜索结果显示延迟",
+      "severity": "P2-一般"
+    },
+    {
+      "id": "DEF-004",
+      "title": "搜索结果显示延迟",
+      "severity": "P2-一般"
+    }
+  ],
+  "logs": [
+    {
+      "test_id": "TC-P0-001",
+      "test_name": "用户注册流程",
+      "status": "通过",
+      "execution_time": 2.78,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P0-002",
+      "test_name": "用户登录",
+      "status": "通过",
+      "execution_time": 2.53,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P0-003",
+      "test_name": "商品搜索",
+      "status": "通过",
+      "execution_time": 2.54,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P0-004",
+      "test_name": "加入购物车",
+      "status": "通过",
+      "execution_time": 1.98,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P0-005",
+      "test_name": "订单创建",
+      "status": "通过",
+      "execution_time": 2.05,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P0-006",
+      "test_name": "支付流程",
+      "status": "通过",
+      "execution_time": 1.47,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P0-007",
+      "test_name": "订单查询",
+      "status": "通过",
+      "execution_time": 0.98,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P0-008",
+      "test_name": "库存扣减",
+      "status": "通过",
+      "execution_time": 1.58,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P0-009",
+      "test_name": "退款申请",
+      "status": "通过",
+      "execution_time": 1.62,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P0-010",
+      "test_name": "物流跟踪",
+      "status": "通过",
+      "execution_time": 2.14,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-001",
+      "test_name": "核心功能用例1",
+      "status": "通过",
+      "execution_time": 1.84,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-002",
+      "test_name": "核心功能用例2",
+      "status": "通过",
+      "execution_time": 1.65,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-003",
+      "test_name": "核心功能用例3",
+      "status": "通过",
+      "execution_time": 2.5,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-004",
+      "test_name": "核心功能用例4",
+      "status": "通过",
+      "execution_time": 2.8,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-005",
+      "test_name": "核心功能用例5",
+      "status": "通过",
+      "execution_time": 1.73,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-006",
+      "test_name": "核心功能用例6",
+      "status": "失败",
+      "execution_time": 1.66,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-007",
+      "test_name": "核心功能用例7",
+      "status": "通过",
+      "execution_time": 1.99,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-008",
+      "test_name": "核心功能用例8",
+      "status": "通过",
+      "execution_time": 2.78,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-009",
+      "test_name": "核心功能用例9",
+      "status": "通过",
+      "execution_time": 1.09,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-010",
+      "test_name": "核心功能用例10",
+      "status": "通过",
+      "execution_time": 2.67,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-011",
+      "test_name": "核心功能用例11",
+      "status": "通过",
+      "execution_time": 1.98,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-012",
+      "test_name": "核心功能用例12",
+      "status": "通过",
+      "execution_time": 1.57,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-013",
+      "test_name": "核心功能用例13",
+      "status": "通过",
+      "execution_time": 1.31,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-014",
+      "test_name": "核心功能用例14",
+      "status": "通过",
+      "execution_time": 2.43,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P1-015",
+      "test_name": "核心功能用例15",
+      "status": "通过",
+      "execution_time": 1.44,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-001",
+      "test_name": "一般功能用例1",
+      "status": "通过",
+      "execution_time": 1.21,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-002",
+      "test_name": "一般功能用例2",
+      "status": "通过",
+      "execution_time": 1.85,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-003",
+      "test_name": "一般功能用例3",
+      "status": "通过",
+      "execution_time": 0.98,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-004",
+      "test_name": "一般功能用例4",
+      "status": "通过",
+      "execution_time": 0.72,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-005",
+      "test_name": "一般功能用例5",
+      "status": "通过",
+      "execution_time": 1.14,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-006",
+      "test_name": "一般功能用例6",
+      "status": "通过",
+      "execution_time": 2.55,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-007",
+      "test_name": "一般功能用例7",
+      "status": "通过",
+      "execution_time": 0.77,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-008",
+      "test_name": "一般功能用例8",
+      "status": "失败",
+      "execution_time": 1.88,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-009",
+      "test_name": "一般功能用例9",
+      "status": "通过",
+      "execution_time": 2.53,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-010",
+      "test_name": "一般功能用例10",
+      "status": "通过",
+      "execution_time": 2.85,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-011",
+      "test_name": "一般功能用例11",
+      "status": "通过",
+      "execution_time": 0.95,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-012",
+      "test_name": "一般功能用例12",
+      "status": "通过",
+      "execution_time": 2.26,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-013",
+      "test_name": "一般功能用例13",
+      "status": "通过",
+      "execution_time": 1.49,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-014",
+      "test_name": "一般功能用例14",
+      "status": "通过",
+      "execution_time": 1.11,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-015",
+      "test_name": "一般功能用例15",
+      "status": "通过",
+      "execution_time": 0.88,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-016",
+      "test_name": "一般功能用例16",
+      "status": "失败",
+      "execution_time": 2.99,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-017",
+      "test_name": "一般功能用例17",
+      "status": "通过",
+      "execution_time": 0.92,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-018",
+      "test_name": "一般功能用例18",
+      "status": "失败",
+      "execution_time": 1.98,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-019",
+      "test_name": "一般功能用例19",
+      "status": "通过",
+      "execution_time": 2.0,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P2-020",
+      "test_name": "一般功能用例20",
+      "status": "通过",
+      "execution_time": 1.14,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P3-001",
+      "test_name": "体验优化用例1",
+      "status": "通过",
+      "execution_time": 0.72,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P3-002",
+      "test_name": "体验优化用例2",
+      "status": "通过",
+      "execution_time": 1.15,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P3-003",
+      "test_name": "体验优化用例3",
+      "status": "通过",
+      "execution_time": 2.1,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P3-004",
+      "test_name": "体验优化用例4",
+      "status": "通过",
+      "execution_time": 2.84,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    },
+    {
+      "test_id": "TC-P3-005",
+      "test_name": "体验优化用例5",
+      "status": "通过",
+      "execution_time": 1.76,
+      "timestamp": "2026-03-04T11:13:16.401064"
+    }
+  ]
+}
