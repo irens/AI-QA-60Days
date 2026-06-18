@@ -1,0 +1,11 @@
+pytest>=7.0.0
+pytest-asyncio
+pytest-benchmark
+openai
+python-dotenv
+tiktoken
+langchain
+ragas
+faiss-cpu
+pandas
+matplotlib
